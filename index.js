@@ -30,6 +30,10 @@ client.connect((err) => {
       .db(`${process.env.DB_NAME}`)
       .collection(`${process.env.DB_BOOKING_COLLECTION}`);
 
+   const adminCollection = client
+      .db(`${process.env.DB_NAME}`)
+      .collection(`${process.env.DB_ADMIN_COLLECTION}`);
+
    // Added Services
    app.post('/addServices', (req, res) => {
       const newServices = req.body;
@@ -77,13 +81,50 @@ client.connect((err) => {
       });
    });
 
-   // All Bookings
+   // Find Bookings
    app.get('/bookings', (req, res) => {
-      console.log(req.query.email);
       bookingCollection
          .find({ userEmail: req.query.email })
          .toArray((err, result) => {
             res.send(result);
+         });
+   });
+
+   // Update Bookings Status
+   app.patch('/bookingUpdate/:id', (req, res) => {
+      bookingCollection
+         .updateOne(
+            { _id: ObjectId(req.params.id) },
+            {
+               $set: { bookingStatus: req.body.updateValue },
+            }
+         )
+         .then((result) => {
+            res.send(result.matchedCount > 0);
+         });
+   });
+
+   // Find Bookings
+   app.get('/allBookings', (req, res) => {
+      bookingCollection.find({}).toArray((err, result) => {
+         res.send(result);
+      });
+   });
+
+   // Added Admin
+   app.post('/addAdmin', (req, res) => {
+      const newAdmin = req.body;
+      adminCollection.insertOne(newAdmin).then((result) => {
+         res.send(result.insertedCount > 0);
+      });
+   });
+
+   // Find Admin
+   app.get('/admin', (req, res) => {
+      adminCollection
+         .find({ email: req.query.email })
+         .toArray((err, result) => {
+            res.send(result.length > 0);
          });
    });
 
