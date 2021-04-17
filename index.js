@@ -13,57 +13,89 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
 const client = new MongoClient(uri, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
+   useNewUrlParser: true,
+   useUnifiedTopology: true,
 });
 
 client.connect((err) => {
-    const servicesCollection = client
-        .db(`${process.env.DB_NAME}`)
-        .collection(`${process.env.DB_SERVICES_COLLECTION}`);
-    const reviewsCollection = client
-        .db(`${process.env.DB_NAME}`)
-        .collection(`${process.env.DB_REVIEWS_COLLECTION}`);
+   const servicesCollection = client
+      .db(`${process.env.DB_NAME}`)
+      .collection(`${process.env.DB_SERVICES_COLLECTION}`);
 
-    // Added Services
-    app.post('/addServices', (req, res) => {
-        const newServices = req.body;
-        servicesCollection.insertOne(newServices).then((result) => {
-            res.send(result.insertedCount > 0);
-        });
-    });
+   const reviewsCollection = client
+      .db(`${process.env.DB_NAME}`)
+      .collection(`${process.env.DB_REVIEWS_COLLECTION}`);
 
-    // All Services
-    app.get('/services', (req, res) => {
-        servicesCollection.find({}).toArray((err, result) => {
+   const bookingCollection = client
+      .db(`${process.env.DB_NAME}`)
+      .collection(`${process.env.DB_BOOKING_COLLECTION}`);
+
+   // Added Services
+   app.post('/addServices', (req, res) => {
+      const newServices = req.body;
+      servicesCollection.insertOne(newServices).then((result) => {
+         res.send(result.insertedCount > 0);
+      });
+   });
+
+   // Delete Services
+   app.delete('/services/delete/:id', (req, res) => {
+      servicesCollection
+         .deleteOne({ _id: ObjectId(req.params.id) })
+         .then((result) => {
+            res.send(result.deletedCount > 0);
+         });
+   });
+
+   // All Services
+   app.get('/services', (req, res) => {
+      servicesCollection.find({}).toArray((err, result) => {
+         res.send(result);
+      });
+   });
+
+   // Added Reviews
+   app.post('/addReviews', (req, res) => {
+      const newReviews = req.body;
+      reviewsCollection.insertOne(newReviews).then((result) => {
+         res.send(result.insertedCount > 0);
+      });
+   });
+
+   // All Reviews
+   app.get('/reviews', (req, res) => {
+      reviewsCollection.find({}).toArray((err, result) => {
+         res.send(result);
+      });
+   });
+
+   // Added Booking
+   app.post('/addBooking', (req, res) => {
+      const newBooking = req.body;
+      bookingCollection.insertOne(newBooking).then((result) => {
+         res.send(result.insertedCount > 0);
+      });
+   });
+
+   // All Bookings
+   app.get('/bookings', (req, res) => {
+      console.log(req.query.email);
+      bookingCollection
+         .find({ userEmail: req.query.email })
+         .toArray((err, result) => {
             res.send(result);
-        });
-    });
+         });
+   });
 
-    // Added Reviews
-    app.post('/addReviews', (req, res) => {
-        const newReviews = req.body;
-        reviewsCollection.insertOne(newReviews).then((result) => {
-            res.send(result.insertedCount > 0);
-        });
-    });
-
-    // All Reviews
-    app.get('/reviews', (req, res) => {
-        reviewsCollection.find({}).toArray((err, result) => {
-            res.send(result);
-        });
-    });
-
-    err
-        ? console.log('Database Connection Fail!')
-        : console.log('Database Connection Successfully!');
+   err
+      ? console.log('Database Connection Fail!')
+      : console.log('Database Connection Successfully!');
 });
 
 app.get('/', (req, res) => {
-    res.send('Hello Express!');
+   res.send('Hello Express!');
 });
 
 app.listen(port, () =>
-    console.log(`App listening at http://localhost:${port}`)
+   console.log(`App listening at http://localhost:${port}`)
 );
